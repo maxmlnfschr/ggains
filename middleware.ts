@@ -6,35 +6,36 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
   
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    
-    console.log("Middleware - Path:", req.nextUrl.pathname);
-    console.log("Middleware - Session:", !!session);
-    
-    if (['/dashboard'].includes(req.nextUrl.pathname)) {
-      if (!session) {
-        console.log("Middleware - Redirigiendo a login (no hay sesión)");
-        return NextResponse.redirect(new URL('/login', req.url));
-      }
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  // Si no hay sesión y trata de acceder a rutas protegidas
+  if (['/admin', '/dashboard', '/profile'].includes(req.nextUrl.pathname)) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', req.url));
     }
-
-    if (['/login', '/register'].includes(req.nextUrl.pathname)) {
-      if (session) {
-        console.log("Middleware - Redirigiendo a dashboard (sesión activa)");
-        return NextResponse.redirect(new URL('/dashboard', req.url));
-      }
-    }
-
-    return res;
-  } catch (error) {
-    console.error("Middleware - Error crítico:", error);
-    return res;
   }
+
+  // Si hay sesión y trata de acceder a login/register
+  if (['/login', '/register'].includes(req.nextUrl.pathname)) {
+    if (session) {
+      // Redirigir según el rol
+      const userRole = session.user?.user_metadata?.role;
+      const redirectUrl = userRole === 'admin' ? '/admin' : '/dashboard';
+      return NextResponse.redirect(new URL(redirectUrl, req.url));
+    }
+  }
+
+  // Si trata de acceder al dashboard siendo admin
+  if (req.nextUrl.pathname === '/dashboard') {
+    const userRole = session?.user?.user_metadata?.role;
+    if (userRole === 'admin') {
+      return NextResponse.redirect(new URL('/admin', req.url));
+    }
+  }
+
+  return res;
 }
 
 export const config = {
-  matcher: ['/dashboard', '/login', '/register']
+  matcher: ['/admin', '/dashboard', '/profile', '/login', '/register']
 } 

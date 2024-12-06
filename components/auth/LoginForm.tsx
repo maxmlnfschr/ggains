@@ -48,7 +48,13 @@ export default function LoginForm() {
 
       console.log("Sesión iniciada exitosamente:", authData);
       toast.success("¡Inicio de sesión exitoso!");
-      window.location.href = '/dashboard';
+
+      const userRole = authData.user?.user_metadata?.role;
+      if (userRole === 'admin') {
+        window.location.href = '/admin';
+      } else {
+        window.location.href = '/dashboard';
+      }
       
     } catch (error: any) {
       console.error("Error al iniciar sesión:", error);

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "create-admin": "ts-node --project tsconfig.scripts.json scripts/create-admin.ts"
+    "create-admin": "ts-node --project tsconfig.scripts.json scripts/create-admin.ts",
+    "update-admin": "ts-node --project tsconfig.scripts.json scripts/update-admin.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
