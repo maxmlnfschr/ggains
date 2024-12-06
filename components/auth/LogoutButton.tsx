@@ -1,13 +1,15 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { getSupabaseClient } from '@/lib/supabase';
 
 export default function LogoutButton() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const supabase = getSupabaseClient();
 
   const handleLogout = async () => {
     try {
@@ -18,12 +20,7 @@ export default function LogoutButton() {
         throw error;
       }
 
-      // Limpiamos cualquier dato de sesión que pudiera quedar
-      await supabase.auth.clearSession();
-      
       toast.success("Sesión cerrada correctamente");
-      
-      // Redirigimos y refrescamos para asegurar que se actualiza el estado
       router.push('/login');
       router.refresh();
       

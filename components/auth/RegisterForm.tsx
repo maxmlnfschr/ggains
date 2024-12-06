@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -32,7 +32,7 @@ export default function RegisterForm() {
       setLoading(true);
 
       // 1. Registramos al usuario
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await getSupabaseClient().auth.signUp({
         email: data.email,
         password: data.password,
         options: {

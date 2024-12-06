@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabaseClient } from '@/lib/supabase';
 import { toast } from "sonner";
 
 const loginSchema = z.object({
@@ -14,7 +14,7 @@ const loginSchema = z.object({
 
 export default function LoginForm() {
   const [loading, setLoading] = useState(false);
-  const supabase = createClientComponentClient();
+  const supabase = getSupabaseClient();
 
   const {
     register,
