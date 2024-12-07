@@ -24,6 +24,20 @@ export interface Exercise {
   created_at: string;
   created_by: string;
   variant_ids: string[];
+  category?: Category;
+  muscles?: {
+    muscle: {
+      id: string;
+      name: string;
+    };
+  }[];
+  equipment?: {
+    equipment: {
+      id: string;
+      name: string;
+      is_alternative: boolean;
+    };
+  }[];
 }
 
 export interface Equipment {

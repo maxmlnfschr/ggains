@@ -179,4 +179,46 @@ export async function PUT(
       { status: 500 }
     );
   }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { exerciseId: string } }
+) {
+  const segments = request.nextUrl.pathname.split('/');
+  const exerciseId = segments[segments.length - 1];
+
+  try {
+    // Eliminar en orden las relaciones
+    await supabase
+      .from('exercise_variants')
+      .delete()
+      .eq('exercise_id', exerciseId);
+
+    await supabase
+      .from('exercise_muscles')
+      .delete()
+      .eq('exercise_id', exerciseId);
+
+    await supabase
+      .from('exercise_equipment')
+      .delete()
+      .eq('exercise_id', exerciseId);
+
+    // Finalmente eliminar el ejercicio
+    const { error } = await supabase
+      .from('exercises')
+      .delete()
+      .eq('id', exerciseId);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error al eliminar ejercicio:', error);
+    return NextResponse.json(
+      { error: 'Error al eliminar ejercicio' },
+      { status: 500 }
+    );
+  }
 } 
