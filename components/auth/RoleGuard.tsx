@@ -1,24 +1,51 @@
 "use client";
 
-import { useAuth } from "@/providers/AuthProvider";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { toast } from "sonner";
+import { getSupabaseClient } from "@/lib/supabase";
 
-export const RoleGuard = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) => {
-  const { user } = useAuth();
+interface RoleGuardProps {
+  children: React.ReactNode;
+  allowedRoles: string[];
+}
+
+export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
-    if (!user || !allowedRoles.includes(user.user_metadata?.role)) {
-      toast.error("No tienes permiso para acceder a esta página");
-      router.push('/');
-    }
-  }, [user, router, allowedRoles]);
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          router.push('/');
+          return;
+        }
 
-  if (!user || !allowedRoles.includes(user.user_metadata?.role)) {
-    return null;
+        const userRole = session.user.user_metadata.role;
+        if (!allowedRoles.includes(userRole)) {
+          router.push('/');
+          return;
+        }
+
+        setIsAuthorized(true);
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        router.push('/');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [allowedRoles, router]);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
   }
 
-  return <>{children}</>;
-}; 
+  return isAuthorized ? children : null;
+} 

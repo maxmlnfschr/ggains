@@ -92,7 +92,12 @@ export default function ExercisesPage() {
   };
 
   const filteredExercises = exercises.filter(exercise => {
-    const matchesSearch = exercise.name.toLowerCase().includes(filters.search.toLowerCase());
+    const searchTerm = filters.search.toLowerCase();
+    const matchesSearch = 
+      exercise.name.toLowerCase().includes(searchTerm) || 
+      exercise.alternative_names?.some(name => 
+        name.toLowerCase().includes(searchTerm)
+      );
     const matchesCategory = !filters.category || exercise.category_id === filters.category;
     const matchesMuscle = !filters.muscle || exercise.muscles?.some(m => m.muscle?.id === filters.muscle);
     
@@ -176,27 +181,33 @@ export default function ExercisesPage() {
           {/* Tabla */}
           {loading ? (
             <div className="text-center py-4">Cargando ejercicios...</div>
+          ) : filteredExercises.length === 0 ? (
+            <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+              {filters.search ? (
+                "No se encontraron ejercicios que coincidan con la búsqueda"
+              ) : (filters.category !== "" || filters.muscle !== "") ? (
+                "No se encontraron ejercicios con los filtros seleccionados"
+              ) : (
+                "No hay ejercicios disponibles"
+              )}
+            </div>
           ) : (
             <div className="bg-white rounded-lg shadow overflow-x-auto">
               <table className="min-w-full">
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombres alternativos</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Músculos</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Series</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reps</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RIR</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RPE</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Equipo necesario</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Equipo alternativo</th>
                     {isDeleteMode && <th></th>}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredExercises.map((exercise) => (
-                    <tr 
-                      key={exercise.id} 
-                      className="hover:bg-gray-50"
-                    >
+                    <tr key={exercise.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Link 
                           href={`/admin/exercises/${exercise.id}`} 
@@ -205,21 +216,20 @@ export default function ExercisesPage() {
                           {exercise.name}
                         </Link>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{exercise.category?.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {exercise.alternative_names?.join(", ") || "-"}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {exercise.muscles?.map(m => m.muscle?.name).join(", ")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {exercise.series_min}-{exercise.series_max}
+                        {exercise.category?.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {exercise.reps_min}-{exercise.reps_max}
+                        {exercise.equipment?.filter(e => !e.equipment?.is_alternative).map(e => e.equipment?.name).join(", ")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {exercise.rir_min}-{exercise.rir_max}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {exercise.rpe_min}-{exercise.rpe_max}
+                        {exercise.equipment?.filter(e => e.equipment?.is_alternative).map(e => e.equipment?.name).join(", ") || "-"}
                       </td>
                       {isDeleteMode && (
                         <td className="px-6 py-4 whitespace-nowrap">

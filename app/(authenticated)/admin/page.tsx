@@ -81,7 +81,7 @@ export default function AdminPage() {
                 onChange={(e) => setSelectedRole(e.target.value || null)}
                 value={selectedRole || ""}
               >
-                <option value="">Todos</option>
+                <option value="">Todos los roles</option>
                 <option value="athlete">Atletas</option>
                 <option value="coach">Entrenadores</option>
                 <option value="admin">Administradores</option>
@@ -111,86 +111,84 @@ export default function AdminPage() {
           </div>
 
           {loading ? (
-            <div className="text-center py-8">Cargando usuarios...</div>
-          ) : error ? (
-            <div className="text-center py-8 text-red-500">
-              Error al cargar usuarios: {error.message}
+            <div className="text-center py-4">Cargando usuarios...</div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+              No se encontraron usuarios que coincidan con la búsqueda
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nombre
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Correo
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Rol
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Estado
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Último acceso
-                      </th>
-                      <th className="px-6 py-3"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Link
-                            href={`/admin/users/${user.id}`}
-                            className="hover:text-blue-600 hover:underline cursor-pointer"
-                          >
-                            {user.user_metadata?.full_name || "-"}
-                          </Link>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {user.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap capitalize">
-                          {user.user_metadata?.role || "-"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {user.email_confirmed_at ? (
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              Verificado
-                            </span>
-                          ) : (
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                              Pendiente
-                            </span>
+            <div className="bg-white rounded-lg shadow overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Nombre
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Correo
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rol
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Último acceso
+                    </th>
+                    <th className="px-6 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Link
+                          href={`/admin/users/${user.id}`}
+                          className="hover:text-blue-600 hover:underline cursor-pointer"
+                        >
+                          {user.user_metadata?.full_name || "-"}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {user.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap capitalize">
+                        {user.user_metadata?.role || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {user.email_confirmed_at ? (
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Verificado
+                          </span>
+                        ) : (
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Pendiente
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.last_sign_in_at
+                          ? new Date(user.last_sign_in_at).toLocaleString()
+                          : "Nunca"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex gap-2">
+                          {showDeleteButtons && (
+                            <button
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="p-1 hover:bg-gray-100 rounded text-red-600"
+                              title="Eliminar usuario"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.last_sign_in_at
-                            ? new Date(user.last_sign_in_at).toLocaleString()
-                            : "Nunca"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex gap-2">
-                            {showDeleteButtons && (
-                              <button
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="p-1 hover:bg-gray-100 rounded text-red-600"
-                                title="Eliminar usuario"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
