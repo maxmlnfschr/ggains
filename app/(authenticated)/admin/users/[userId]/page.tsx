@@ -7,22 +7,38 @@ import { useRouter } from "next/navigation";
 import { Edit2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { getSupabaseClient } from "@/lib/supabase";
 
 export default function UserProfilePage({ params }: { params: Promise<{ userId: string }> }) {
   const resolvedParams = use(params);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const supabase = getSupabaseClient();
+
+  const fetchUserData = async (userId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Error al cargar usuario");
+      const data = await response.json();
+      return data.user;
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch(`/api/admin/users/${resolvedParams.userId}`);
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error);
-        
-        setUser(data.user);
+        const userData = await fetchUserData(resolvedParams.userId);
+        setUser(userData);
       } catch (error) {
         toast.error("Error al cargar usuario");
         router.push("/admin");

@@ -30,14 +30,24 @@ export default function Navbar() {
 
           <div className="flex items-center space-x-4">
             {isAdmin && (
-              <Link 
-                href="/admin" 
-                className={`inline-flex items-center px-4 text-sm font-medium ${
-                  isActive('/admin') ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-black'
-                }`}
-              >
-                Panel de control
-              </Link>
+              <>
+                <Link 
+                  href="/admin" 
+                  className={`inline-flex items-center px-4 text-sm font-medium ${
+                    isActive('/admin') ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-black'
+                  }`}
+                >
+                  Panel de control
+                </Link>
+                <Link 
+                  href="/admin/exercises" 
+                  className={`inline-flex items-center px-4 text-sm font-medium ${
+                    isActive('/admin/exercises') ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-black'
+                  }`}
+                >
+                  Ejercicios
+                </Link>
+              </>
             )}
             <Link 
               href="/profile" 
