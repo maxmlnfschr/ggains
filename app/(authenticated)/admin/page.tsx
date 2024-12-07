@@ -3,13 +3,20 @@
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useUsers } from "@/hooks/useUsers";
 import { useState } from "react";
-import CreateUserModal from "@/components/admin/CreateUserModal";
+import EditUserModal from "@/components/admin/EditUserModal";
+import { Trash2, Edit2 } from "lucide-react";
+import { User } from "@supabase/supabase-js";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function AdminPage() {
   const { users, loading, error, refetch } = useUsers();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const router = useRouter();
 
   // Filtrar usuarios por rol y término de búsqueda
   const filteredUsers = users.filter((user) => {
@@ -25,6 +32,24 @@ export default function AdminPage() {
     return matchesRole && matchesSearch;
   });
 
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) return;
+
+    toast.promise(
+      fetch(`/api/admin/users/${userId}`, { method: "DELETE" })
+        .then(async (response) => {
+          if (!response.ok) throw new Error("Error al eliminar usuario");
+          refetch();
+        }),
+      {
+        loading: 'Eliminando usuario...',
+        success: 'Usuario eliminado exitosamente',
+        error: 'Error al eliminar usuario',
+        style: { background: 'white', color: 'black' }
+      }
+    );
+  };
+
   return (
     <RoleGuard allowedRoles={["admin"]}>
       <div className="min-h-screen p-8">
@@ -33,7 +58,7 @@ export default function AdminPage() {
             <h1 className="text-2xl font-bold">Panel de Administración</h1>
             <div className="flex gap-4">
               <button
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={() => router.push('/admin/users/new')}
                 className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
               >
                 Crear Usuario
@@ -99,6 +124,9 @@ export default function AdminPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Último acceso
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -129,6 +157,24 @@ export default function AdminPage() {
                             ? new Date(user.last_sign_in_at).toLocaleString()
                             : "Nunca"}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => router.push(`/admin/users/${user.id}/edit`)}
+                              className="p-1 hover:bg-gray-100 rounded"
+                              title="Editar usuario"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="p-1 hover:bg-gray-100 rounded text-red-600"
+                              title="Eliminar usuario"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -137,10 +183,14 @@ export default function AdminPage() {
             </div>
           )}
 
-          <CreateUserModal
-            isOpen={isCreateModalOpen}
-            onClose={() => setIsCreateModalOpen(false)}
+          <EditUserModal
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setUserToEdit(null);
+            }}
             onSuccess={refetch}
+            user={userToEdit}
           />
         </div>
       </div>

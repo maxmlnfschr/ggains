@@ -77,7 +77,61 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
         <h2 className="text-xl font-bold mb-4">Editar Usuario</h2>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* ... campos similares a CreateUserModal ... */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Nombre completo</label>
+            <input
+              {...register("fullName")}
+              className="w-full p-2 border rounded-md"
+              disabled={loading}
+            />
+            {errors.fullName && (
+              <p className="text-red-500 text-sm">{errors.fullName.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input
+              {...register("email")}
+              type="email"
+              className="w-full p-2 border rounded-md"
+              disabled={loading}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Rol</label>
+            <select
+              {...register("role")}
+              className="w-full p-2 border rounded-md"
+              disabled={loading}
+            >
+              <option value="athlete">Atleta</option>
+              <option value="coach">Entrenador</option>
+            </select>
+            {errors.role && (
+              <p className="text-red-500 text-sm">{errors.role.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Nueva Contraseña (opcional)
+            </label>
+            <input
+              {...register("password")}
+              type="password"
+              className="w-full p-2 border rounded-md"
+              disabled={loading}
+            />
+            {errors.password && (
+              <p className="text-red-500 text-sm">{errors.password.message}</p>
+            )}
+          </div>
+
           <div className="flex justify-end gap-4 mt-6">
             <button
               type="button"

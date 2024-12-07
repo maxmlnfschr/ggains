@@ -10,18 +10,15 @@ export function useUsers() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      
-      // Obtener el token de sesión actual
       const supabase = getSupabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
       
-      if (!session?.access_token) {
-        throw new Error('No hay sesión activa');
-      }
+      // Obtener la sesión actual para el token
+      const { data: { session } } = await supabase.auth.getSession();
 
+      // Usar el endpoint que ya tiene configurada la service role key
       const response = await fetch('/api/admin/users', {
         headers: {
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session?.access_token}`
         }
       });
       

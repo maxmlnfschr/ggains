@@ -1,38 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+export async function GET() {
   try {
-    // Usar service_role key para operaciones admin
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_KEY!, // Esta es la service role key
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-    
-    // Verificar que el usuario actual sea admin
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || user?.user_metadata?.role !== 'admin') {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-    }
-
-    // Obtener usuarios
     const { data: { users }, error } = await supabase.auth.admin.listUsers();
     
     if (error) throw error;
 
+    console.log('Usuarios obtenidos:', users); // Para debugging
     return NextResponse.json({ users });
   } catch (error) {
     console.error('Error al obtener usuarios:', error);
@@ -45,20 +31,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-
     const body = await request.json();
+    console.log('Datos recibidos:', body);
     
-    const { data: newUser, error } = await supabase.auth.admin.createUser({
+    // 1. Crear usuario en auth.users
+    const { data, error: authError } = await supabase.auth.admin.createUser({
       email: body.email,
       password: body.password,
       email_confirm: true,
@@ -68,13 +45,37 @@ export async function POST(request: Request) {
       }
     });
 
-    if (error) throw error;
+    if (authError) {
+      console.error('Error al crear usuario en auth:', authError);
+      throw authError;
+    }
 
-    return NextResponse.json({ user: newUser.user });
+    if (!data.user) {
+      throw new Error('No se pudo crear el usuario');
+    }
+
+    // 2. Crear/Actualizar entrada en profiles
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: data.user.id,
+        full_name: body.fullName,
+        role: body.role
+      }, {
+        onConflict: 'id'
+      });
+
+    if (profileError) {
+      console.error('Error al crear perfil:', profileError);
+      await supabase.auth.admin.deleteUser(data.user.id);
+      throw profileError;
+    }
+
+    return NextResponse.json({ user: data.user });
   } catch (error) {
-    console.error('Error al crear usuario:', error);
+    console.error('Error completo al crear usuario:', error);
     return NextResponse.json(
-      { error: 'Error al crear usuario' },
+      { error: error instanceof Error ? error.message : 'Error al crear usuario' },
       { status: 500 }
     );
   }
