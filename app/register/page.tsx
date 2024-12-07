@@ -8,7 +8,7 @@ export default function RegisterPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold">Registro</h1>
           <p className="text-gray-600">
-            ¿Ya tienes una cuenta?{" "}
+            ¿Ya tenés una cuenta?{" "}
             <Link href="/login" className="text-black hover:underline">
               Inicia sesión
             </Link>

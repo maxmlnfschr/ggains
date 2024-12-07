@@ -67,7 +67,7 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full max-w-md">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Email</label>
+        <label className="text-sm font-medium">Correo</label>
         <input
           {...register("email")}
           type="email"
@@ -99,7 +99,7 @@ export default function LoginForm() {
         disabled={loading}
         className="w-full bg-black text-white p-2 rounded-md hover:bg-gray-800 disabled:opacity-50"
       >
-        {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+        {loading ? "Iniciando sesión..." : "Iniciar"}
       </button>
     </form>
   );

@@ -23,11 +23,12 @@ interface UpdateUserData {
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
-  const userId = await Promise.resolve(params.userId);
+  const resolvedParams = await params;
 
   try {
+    const userId = resolvedParams.userId;
     // 1. Eliminar de profiles (opcional si tienes ON DELETE CASCADE)
     const { error: profileError } = await supabase
       .from('profiles')
@@ -53,51 +54,79 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
-  const userId = await Promise.resolve(params.userId);
-  
+  const { userId } = await params;
+
   try {
     const body = await request.json();
     
-    // 1. Actualizar auth.users
+    const updateData: {
+      email: string;
+      data: {
+        full_name: string;
+        role: string;
+        email_verified: boolean;
+        phone_verified: boolean;
+        phone: string;
+      };
+      password?: string;
+    } = {
+      email: body.email,
+      data: {
+        full_name: body.fullName,
+        role: body.role,
+        email_verified: body.email_verified ?? false,
+        phone_verified: body.phone_verified ?? false,
+        phone: body.phone || ''
+      }
+    };
+
+    if (body.password) {
+      updateData.password = body.password;
+    }
+
     const { data: { user }, error: authError } = await supabase.auth.admin.updateUserById(
       userId,
-      {
-        email: body.email,
-        user_metadata: {
-          full_name: body.fullName,
-          role: body.role
-        }
-      }
+      updateData
     );
 
-    if (authError) throw authError;
+    if (authError) {
+      console.error('Error al actualizar auth:', authError);
+      throw authError;
+    }
 
-    // 2. Actualizar profiles (el trigger manejará updated_at)
+    // 2. Actualizar profiles
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
         id: userId,
         full_name: body.fullName,
-        role: body.role
+        role: body.role,
+        updated_at: new Date().toISOString()
       });
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error('Error al actualizar profile:', profileError);
+      throw profileError;
+    }
 
+    console.log('Usuario actualizado:', user);
     return NextResponse.json({ user });
   } catch (error) {
-    console.error('Error al actualizar usuario:', error);
+    console.error('Error completo:', error);
     return NextResponse.json({ error: 'Error al actualizar usuario' }, { status: 500 });
   }
 }
 
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const resolvedParams = await params;
+
   try {
-    const { data: { user }, error } = await supabase.auth.admin.getUserById(params.userId);
+    const { data: { user }, error } = await supabase.auth.admin.getUserById(resolvedParams.userId);
     
     if (error) throw error;
 

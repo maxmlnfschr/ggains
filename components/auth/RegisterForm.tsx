@@ -30,15 +30,18 @@ export default function RegisterForm() {
   const onSubmit = async (data: z.infer<typeof registerSchema>) => {
     try {
       setLoading(true);
+      const supabase = getSupabaseClient();
 
-      // 1. Registramos al usuario
-      const { data: authData, error: signUpError } = await getSupabaseClient().auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           data: {
             full_name: data.fullName,
             role: data.role,
+            email_verified: false,
+            phone_verified: false,
+            phone: ''
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
@@ -98,7 +101,7 @@ export default function RegisterForm() {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Email</label>
+        <label className="text-sm font-medium">Correo</label>
         <input
           {...register("email")}
           type="email"
@@ -145,7 +148,7 @@ export default function RegisterForm() {
         disabled={loading}
         className="w-full bg-black text-white p-2 rounded-md hover:bg-gray-800 disabled:opacity-50"
       >
-        {loading ? "Registrando..." : "Registrarse"}
+        {loading ? "Registrándome..." : "Registrarme"}
       </button>
     </form>
   );

@@ -32,16 +32,17 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log('Datos recibidos:', body);
     
-    // 1. Crear usuario en auth.users
-    const { data, error: authError } = await supabase.auth.admin.createUser({
+    const { data: newUser, error: authError } = await supabase.auth.admin.createUser({
       email: body.email,
       password: body.password,
       email_confirm: true,
       user_metadata: {
         full_name: body.fullName,
-        role: body.role
+        role: body.role,
+        email_verified: true,
+        phone_verified: false,
+        phone: ''
       }
     });
 
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
       throw authError;
     }
 
-    if (!data.user) {
+    if (!newUser.user) {
       throw new Error('No se pudo crear el usuario');
     }
 
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
-        id: data.user.id,
+        id: newUser.user.id,
         full_name: body.fullName,
         role: body.role
       }, {
@@ -67,11 +68,11 @@ export async function POST(request: Request) {
 
     if (profileError) {
       console.error('Error al crear perfil:', profileError);
-      await supabase.auth.admin.deleteUser(data.user.id);
+      await supabase.auth.admin.deleteUser(newUser.user.id);
       throw profileError;
     }
 
-    return NextResponse.json({ user: data.user });
+    return NextResponse.json({ user: newUser.user });
   } catch (error) {
     console.error('Error completo al crear usuario:', error);
     return NextResponse.json(

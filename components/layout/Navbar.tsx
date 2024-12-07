@@ -36,7 +36,7 @@ export default function Navbar() {
                   isActive('/admin') ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-black'
                 }`}
               >
-                Admin
+                Panel de control
               </Link>
             )}
             <Link 
@@ -45,7 +45,7 @@ export default function Navbar() {
                 isActive('/profile') ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-black'
               }`}
             >
-              Mi Perfil
+              Perfil
             </Link>
           </div>
         </div>

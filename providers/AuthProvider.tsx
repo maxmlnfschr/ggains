@@ -1,21 +1,23 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Session, User } from "@supabase/supabase-js";
+import { User, Session } from "@supabase/supabase-js";
+import { getSupabaseClient } from "@/lib/supabase";
 
 interface AuthContextType {
-  session: Session | null;
   user: User | null;
+  session: Session | null;
   loading: boolean;
   error: Error | null;
+  refreshSession: () => Promise<Session | null>;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  session: null,
   user: null,
+  session: null,
   loading: true,
   error: null,
+  refreshSession: async () => null
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -23,31 +25,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const supabase = createClientComponentClient();
+  const supabase = getSupabaseClient();
+
+  const refreshSession = async () => {
+    console.log('🔄 Intentando refrescar sesión...');
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    console.log('📦 Sesión obtenida:', currentSession ? 'Válida' : 'Nula');
+    setSession(currentSession);
+    setUser(currentSession?.user ?? null);
+    return currentSession;
+  };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setLoading(false);
-    });
+    console.log('🚀 Inicializando AuthProvider...');
+    refreshSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      console.log("Auth event:", event);
+    } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+      console.log('🔔 Cambio en el estado de autenticación:', _event);
+      console.log('👤 Nueva sesión:', currentSession ? 'Válida' : 'Nula');
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase.auth]);
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, error }}>
+    <AuthContext.Provider value={{ session, user, loading, error, refreshSession }}>
       {children}
     </AuthContext.Provider>
   );
