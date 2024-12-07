@@ -71,7 +71,10 @@ export default function EditUserForm({ userId }: { userId: string }) {
       }
 
       toast.success("Usuario actualizado exitosamente");
-      router.push("/admin");
+      
+      // Forzar revalidación de datos
+      router.refresh(); // Esto fuerza a Next.js a revalidar los datos
+      router.push("/admin/users"); // Redirigir después de la revalidación
     } catch (error: any) {
       console.error("Error:", error);
       toast.error(error.message || "Error al actualizar usuario");
