@@ -35,19 +35,20 @@ export default function AdminPage() {
   });
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) return;
+    if (!confirm("¿Estás seguro de que quieres eliminar este usuario?")) return;
 
     toast.promise(
-      fetch(`/api/admin/users/${userId}`, { method: "DELETE" })
-        .then(async (response) => {
+      fetch(`/api/admin/users/${userId}`, { method: "DELETE" }).then(
+        async (response) => {
           if (!response.ok) throw new Error("Error al eliminar usuario");
           refetch();
-        }),
+        }
+      ),
       {
-        loading: 'Eliminando usuario...',
-        success: 'Usuario eliminado exitosamente',
-        error: 'Error al eliminar usuario',
-        style: { background: 'white', color: 'black' }
+        loading: "Eliminando usuario...",
+        success: "Usuario eliminado exitosamente",
+        error: "Error al eliminar usuario",
+        style: { background: "white", color: "black" },
       }
     );
   };
@@ -60,7 +61,7 @@ export default function AdminPage() {
             <h1 className="text-2xl font-bold">Panel de control</h1>
             <div className="flex gap-4">
               <button
-                onClick={() => router.push('/admin/users/new')}
+                onClick={() => router.push("/admin/users/new")}
                 className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
               >
                 Crear
@@ -68,12 +69,12 @@ export default function AdminPage() {
               <button
                 onClick={() => setShowDeleteButtons(!showDeleteButtons)}
                 className={`px-4 py-2 rounded-md ${
-                  showDeleteButtons 
-                    ? 'bg-red-600 hover:bg-red-700' 
-                    : 'bg-black hover:bg-gray-800'
+                  showDeleteButtons
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-black hover:bg-gray-800"
                 } text-white`}
               >
-                {showDeleteButtons ? 'Cancelar' : 'Eliminar'}
+                {showDeleteButtons ? "Cancelar" : "Eliminar"}
               </button>
               <select
                 className="px-4 py-2 border rounded-md"

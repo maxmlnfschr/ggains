@@ -1,35 +1,24 @@
 "use client";
 
-import { usePermissions } from "@/hooks/usePermissions";
-import { type UserRole } from "@/types/auth";
+import { useAuth } from "@/providers/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-interface RoleGuardProps {
-  children: React.ReactNode;
-  allowedRoles: UserRole[];
-  fallbackPath?: string;
-}
-
-export function RoleGuard({ 
-  children, 
-  allowedRoles, 
-  fallbackPath = '/dashboard' 
-}: RoleGuardProps) {
-  const { role } = usePermissions();
+export const RoleGuard = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) => {
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!allowedRoles.includes(role)) {
+    if (!user || !allowedRoles.includes(user.user_metadata?.role)) {
       toast.error("No tienes permiso para acceder a esta página");
-      router.push(fallbackPath);
+      router.push('/');
     }
-  }, [role, allowedRoles, router, fallbackPath]);
+  }, [user, router, allowedRoles]);
 
-  if (!allowedRoles.includes(role)) {
+  if (!user || !allowedRoles.includes(user.user_metadata?.role)) {
     return null;
   }
 
   return <>{children}</>;
-} 
+}; 
