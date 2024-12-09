@@ -2,40 +2,43 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
-  
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  // Si no hay sesión y trata de acceder a rutas protegidas
-  if (['/admin', '/dashboard', '/profile'].includes(req.nextUrl.pathname)) {
-    if (!session) {
-      return NextResponse.redirect(new URL('/login', req.url));
-    }
-  }
+const protectedPaths = ['/routines', '/admin', '/dashboard', '/profile']
 
-  // Si hay sesión y trata de acceder a login/register
-  if (['/login', '/register'].includes(req.nextUrl.pathname)) {
-    if (session) {
-      // Redirigir según el rol
-      const userRole = session.user?.user_metadata?.role;
-      const redirectUrl = userRole === 'admin' ? '/admin' : '/dashboard';
-      return NextResponse.redirect(new URL(redirectUrl, req.url));
-    }
-  }
+export async function middleware(request: NextRequest) {
+  try {
+    const res = NextResponse.next()
+    const supabase = createMiddlewareClient({ req: request, res })
 
-  // Si trata de acceder al dashboard siendo admin
-  if (req.nextUrl.pathname === '/dashboard') {
-    const userRole = session?.user?.user_metadata?.role;
-    if (userRole === 'admin') {
-      return NextResponse.redirect(new URL('/admin', req.url));
-    }
-  }
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-  return res;
+    const isProtectedPath = protectedPaths.some(path => 
+      request.nextUrl.pathname.startsWith(path)
+    )
+
+    if (!session && isProtectedPath) {
+      const redirectUrl = new URL('/login', request.url)
+      redirectUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    return res
+  } catch (error) {
+    console.error('Middleware error:', error)
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
 }
 
 export const config = {
-  matcher: ['/admin', '/dashboard', '/profile', '/login', '/register']
-} 
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+}

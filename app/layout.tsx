@@ -1,5 +1,14 @@
 import { AuthProvider } from "@/providers/AuthProvider";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toaster";
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'GGains',
+  description: 'Gestión de rutinas de gimnasio',
+}
 
 export default function RootLayout({
   children,
@@ -8,20 +17,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>
+      <body className={inter.className}>
         <AuthProvider>
           {children}
-          <Toaster 
-            position="top-center"
-            expand={true}
-            toastOptions={{
-              style: { 
-                background: 'white',
-                color: 'black',
-                border: '1px solid #e2e8f0'
-              }
-            }}
-          />
+          <Toaster />
         </AuthProvider>
       </body>
     </html>
