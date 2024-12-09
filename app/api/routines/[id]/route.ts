@@ -7,7 +7,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const routineId = await Promise.resolve(params.id);
+    const cookieStore = cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
@@ -17,23 +19,37 @@ export async function GET(
       )
     }
 
-    const { data: routine, error } = await supabase
-      .from('routines')
-      .select(`
-        *,
-        routine_exercises (
+    const [{ data: routine, error: routineError }, { data: exercises, error: exercisesError }] = await Promise.all([
+      supabase
+        .from('routines')
+        .select(`
           *,
-          exercise: exercises (*)
-        )
-      `)
-      .eq('id', params.id)
-      .eq('user_id', session.user.id)
-      .single()
+          routine_exercises (
+            *,
+            exercise: exercises (*)
+          )
+        `)
+        .eq('id', routineId)
+        .eq('user_id', session.user.id)
+        .single(),
+      supabase
+        .from('exercises')
+        .select('*')
+        .order('name', { ascending: true })
+    ])
 
-    if (error) {
-      console.error('Supabase error:', error)
+    if (routineError) {
+      console.error('Supabase error:', routineError)
       return NextResponse.json(
-        { error: error.message },
+        { error: routineError.message },
+        { status: 500 }
+      )
+    }
+
+    if (exercisesError) {
+      console.error('Supabase error:', exercisesError)
+      return NextResponse.json(
+        { error: exercisesError.message },
         { status: 500 }
       )
     }
@@ -45,7 +61,10 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(routine)
+    return NextResponse.json({
+      routine,
+      exercises: exercises || []
+    })
   } catch (error) {
     console.error('Error in routine route:', error)
     return NextResponse.json(

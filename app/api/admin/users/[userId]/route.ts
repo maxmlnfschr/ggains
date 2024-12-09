@@ -48,14 +48,17 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const resolvedParams = await params;
+  const userId = resolvedParams.userId;
+
   try {
     const body = await request.json();
 
     // 1. Actualizar el usuario en auth
     const { data: userData, error: updateError } = await supabase.auth.admin.updateUserById(
-      params.userId,
+      userId,
       {
         email: body.email,
         user_metadata: {
@@ -71,7 +74,7 @@ export async function PATCH(
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
-        id: params.userId,
+        id: userId,
         full_name: body.fullName,
         role: body.role,
         updated_at: new Date().toISOString()
@@ -143,4 +146,4 @@ export async function POST(request: Request) {
     console.error('Error al crear usuario:', error);
     return NextResponse.json({ error: 'Error al crear usuario' }, { status: 500 });
   }
-} 
+}

@@ -14,13 +14,22 @@ interface RoutinePageProps {
 }
 
 export default function RoutinePage({ params }: RoutinePageProps) {
+  const [routineId, setRoutineId] = useState<string | null>(null)
   const [routine, setRoutine] = useState<any>(null)
   const [exercises, setExercises] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
   const supabase = createClientComponentClient<Database>()
-  const routineId = params.id
+
+  useEffect(() => {
+    async function resolveParams() {
+      const resolvedParams = await params
+      const id = resolvedParams.id
+      setRoutineId(id)
+    }
+    resolveParams()
+  }, [params])
 
   useEffect(() => {
     if (routineId) {
